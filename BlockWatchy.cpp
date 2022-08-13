@@ -326,12 +326,16 @@ void Watchy::init(String datetime){
 }
 
 void Watchy::deepSleep(){
+  Serial.println("Enter in deep sleep");
   #ifndef ESP_RTC
   esp_sleep_enable_ext0_wakeup(RTC_PIN, 0); //enable deep sleep wake on RTC interrupt
   #endif  
   #ifdef ESP_RTC
-  esp_sleep_enable_timer_wakeup(120000000);
+  Serial.println("Def true");
+  #esp_sleep_enable_timer_wakeup(60000000);
   #endif 
+  esp_sleep_enable_timer_wakeup(120000000);
+
   esp_sleep_enable_ext1_wakeup(BTN_PIN_MASK, ESP_EXT1_WAKEUP_ANY_HIGH); //enable deep sleep wake on button press
   esp_deep_sleep_start();
 }
@@ -553,9 +557,16 @@ void Watchy::showMenu(byte menuIndex, bool partialRefresh){
             display.println(menuItems[i]);
         }   
     }
+    Serial.println("Menu");
+    // String percentage = ((String)getBatteryPercentage())+'%';
+    float voltage = analogRead(ADC_PIN) / 4096.0 * 7.23;
+    float voltage1 = analogReadMilliVolts(ADC_PIN) / 1000.0f * 2.0f;
+       
 
-    String percentage = ((String)getBatteryPercentage())+'%';
-
+    Serial.println(analogRead(ADC_PIN));
+    Serial.println(analogReadMilliVolts(ADC_PIN));
+    String percentage = ((String)analogReadMilliVolts(ADC_PIN));
+    
     display.getTextBounds(percentage, 0, 190, &x1, &y1, &w, &h);
     display.setCursor(190 - w, 190);
     display.print(percentage);
@@ -960,8 +971,13 @@ void Watchy::setupWifi(){
 
   WiFiManager wifiManager;
   wifiManager.resetSettings();
-  wifiManager.setTimeout(WIFI_AP_TIMEOUT);
+  
+  //wifiManager.setTimeout(WIFI_AP_TIMEOUT);
+  wifiManager.setTimeout(60);
+  wifiManager.setDebugOutput("DEBUG_VERBOSE");
   wifiManager.setAPCallback(_configModeCallback);
+  
+  //if(!wifiManager.autoConnect("john", "aazertyuiopqsdf")) {//WiFi setup failed
   if(!wifiManager.autoConnect(WIFI_AP_SSID)) {//WiFi setup failed
     display.init(0, false); //_initial_refresh to false to prevent full update on init
     display.setFullWindow();
